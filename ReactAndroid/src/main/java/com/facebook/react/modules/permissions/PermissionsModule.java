@@ -204,9 +204,16 @@ public class PermissionsModule extends ReactContextBaseJavaModule implements Per
     int requestCode,
     String[] permissions,
     int[] grantResults) {
+    try {
       mCallbacks.get(requestCode).invoke(grantResults, getPermissionAwareActivity());
       mCallbacks.remove(requestCode);
+    } catch(IllegalStateException e) {
+      // getPermissionAwareActivity 中的getCurrentActivity会是null, 在这里捕获该非检查异常。
+      // 但是没有完全修复getCurrentActivity为null的隐患。
+      // https://github.com/facebook/react-native/issues/10009
+    } finally {
       return mCallbacks.size() == 0;
+    }
   }
 
   private PermissionAwareActivity getPermissionAwareActivity() {
